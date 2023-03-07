@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_webapi_first_course/models/journal.dart';
 import 'package:flutter_webapi_first_course/services/journal_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../helpers/weekday.dart';
 
@@ -43,26 +44,33 @@ class AddJournalScreen extends StatelessWidget {
   }
 
   registerJournal(BuildContext context) {
-    String content = _contentController.text;
-    //substitui o conteudo vazio que criamos pro journal de exemplo
-    //pelo conteudo que recebemos do widget em que estamos
-    journal.content = content;
-    JournalService service = JournalService();
-    //anteriormente essa função era async, porém nã ose recomenda usar
-    //build context com async pq não há garantia de que quando a função
-    //tiver finalizado o contaxto vai ser o mesmo, por isso alteramos para
-    //um .then ao final do service, assim podemos esperar que a função
-    //termine de executar antes de usar o navigator
-    if (isEditing) {
-      service.register(journal).then((value) {
-      Navigator.pop(context, value);});
-    }else{
-      service.edit(journal.id, journal).then((value) {
-      Navigator.pop(context, value);});
-    }
+    SharedPreferences.getInstance().then((prefs) {
+      String? token = prefs.getString("accessToken");
+      if (token != null) {
+        String content = _contentController.text;
+        //substitui o conteudo vazio que criamos pro journal de exemplo
+        //pelo conteudo que recebemos do widget em que estamos
+        journal.content = content;
+        JournalService service = JournalService();
+        //anteriormente essa função era async, porém nã ose recomenda usar
+        //build context com async pq não há garantia de que quando a função
+        //tiver finalizado o contaxto vai ser o mesmo, por isso alteramos para
+        //um .then ao final do service, assim podemos esperar que a função
+        //termine de executar antes de usar o navigator
+        if (isEditing) {
+          service.register(journal, token).then((value) {
+            Navigator.pop(context, value);
+          });
+        } else {
+          service.edit(journal.id, journal, token).then((value) {
+            Navigator.pop(context, value);
+          });
+        }
 
-    //o segundo argumento no navigator.pop restorna uma informação para a
-    //que invocou a tela atual (ou seja, tela anterior)
-    //aqui no caso é a journal_card dentro da HomeScreen
+        //o segundo argumento no navigator.pop restorna uma informação para a
+        //que invocou a tela atual (ou seja, tela anterior)
+        //aqui no caso é a journal_card dentro da HomeScreen
+      }
+    });
   }
 }

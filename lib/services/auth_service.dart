@@ -33,7 +33,7 @@ class AuthService {
         }
         throw HttpException(response.body);
       } 
-      print(response.body);
+      print("antes de saveuserinfo \n ${response.body}");
       saveUserInfos(response.body);
       return true;
 
@@ -55,23 +55,25 @@ class AuthService {
       return true;
   }
 
-  saveUserInfos(String body)  {
-    print(body);
+  saveUserInfos(String body) async {
+    print("saveuserinfo recebe \n $body");
     Map<String, dynamic> map = json.decode(body);
-    print(map);
     //essas respostas são salvas de acordo com a formatação do json que pode ser acessada pelo Postman
     //token salva a informação dentro do json que responde á chave accesToken
     String token = map["accessToken"];
     //email salva a infromação de chave 'email' dentro do subjson 'user'
     String email = map["user"]["email"];
-    int id = map["user"]["id"];
+    String id = map["user"]["id"].toString();
+    print(id);
+    SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    print("$token/n$email/n$id");
+    prefs.setString("accessToken", token);
 
-    // SharedPreferences prefs = await SharedPreferences.getInstance();
-    // prefs.setString("accesToken", token);
-    // prefs.setString("email", email);
-    // prefs.setInt("id'", id);
+    prefs.setString("email", email);
+
+    prefs.setString("id", id);
+    
+    print(prefs.getString("id"));
   }
 }
 

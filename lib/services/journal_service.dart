@@ -21,7 +21,7 @@ class JournalService {
     return Uri.parse(getUrl());
   }
 
-  Future<bool> register(Journal journal) async {
+  Future<bool> register(Journal journal, String token) async {
     //converte a classe/model journal em um map/dicionario e então
     //converte o dicionário para um json que será reconhecido pelo BD
     String jsonJournal = json.encode(journal.toMap());
@@ -29,7 +29,10 @@ class JournalService {
     http.Response response = await client.post(getUri(),
         //envia o nosso dicionário jsonJournal para o corpo do nosso journals
         //dentro do banco de dados
-        headers: {'content-type': 'application/json'},
+        headers: {
+          'content-type': 'application/json',
+          "Authorization": "Bearer $token"
+        },
         body: jsonJournal);
     //retonro 201 é o retorno de criação com sucesso
     if (response.statusCode == 201) {
@@ -38,11 +41,15 @@ class JournalService {
     return false;
   }
 
-  Future<bool> edit(String id, Journal journal) async {
+  Future<bool> edit(String id, Journal journal, String token) async {
     String jsonJournal = json.encode(journal.toMap());
 
     http.Response response = await client.put(Uri.parse('${getUrl()}$id'),
-        headers: {'content-type': 'application/json'}, body: jsonJournal);
+        headers: {
+          'content-type': 'application/json',
+          "Authorization": "Bearer $token"
+        },
+        body: jsonJournal);
 
     if (response.statusCode == 200) {
       return true;
@@ -50,12 +57,11 @@ class JournalService {
     return false;
   }
 
-  Future<List<Journal>> getAll({required String id, required String token}) async {
-    http.Response response =
-        await client.get(Uri.parse("${url}users/$id/journals"),
-        headers: {
-          "Authorization": "Bearer $token"
-        });
+  Future<List<Journal>> getAll(
+      {required String id, required String token}) async {
+    http.Response response = await client.get(
+        Uri.parse("${url}users/$id/journals"),
+        headers: {"Authorization": "Bearer $token"});
 
     if (response.statusCode != 200) {
       throw Exception();
@@ -74,8 +80,9 @@ class JournalService {
     return result;
   }
 
-  Future<bool> delete(String id) async {
-    http.Response response = await http.delete(Uri.parse('${getUrl()}$id'));
+  Future<bool> delete(String id, String token) async {
+    http.Response response = await http.delete(Uri.parse('${getUrl()}$id'),
+    headers: {"Authorization": "Bearer $token"});
     if (response.statusCode == 200) {
       return true;
     }

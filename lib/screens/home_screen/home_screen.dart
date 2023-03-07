@@ -28,6 +28,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   int? userId;
 
+  String? usertoken;
+
   @override
   void initState() {
     refresh();
@@ -50,19 +52,36 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: const Icon(Icons.refresh))
         ],
       ),
-      body: (userId != null) ?
-      ListView(
-        controller: _listScrollController,
-        children: generateListJournalCards(
-          windowPage: windowPage,
-          currentDay: currentDay,
-          database: database, 
-          refreshFunction: refresh,
-          userId: userId!
-          //sem parenteses pq não queremos enviar a chamada da função
-          //só a função
+      body: (userId != null && usertoken != null)
+          ? ListView(
+              controller: _listScrollController,
+              children: generateListJournalCards(
+                  windowPage: windowPage,
+                  currentDay: currentDay,
+                  database: database,
+                  refreshFunction: refresh,
+                  userId: userId!,
+                  token: usertoken!
+                  //sem parenteses pq não queremos enviar a chamada da função
+                  //só a função
+                  ),
+            )
+          : const Center(
+              child: CircularProgressIndicator(),
+            ),
+      drawer: Drawer(
+        child: ListView(
+          children: [
+            ListTile(
+              onTap: () {
+                logout();
+              },
+              title: Text("Desconectar"),
+              leading: Icon(Icons.logout),
+            )
+          ],
         ),
-      ) : const Center(child: CircularProgressIndicator(),),
+      ),
     );
   }
 
@@ -75,17 +94,18 @@ class _HomeScreenState extends State<HomeScreen> {
     SharedPreferences.getInstance().then((prefs) {
       String? token = prefs.getString("accessToken");
       String? email = prefs.getString("email");
-      int? id = prefs.getInt("id");
-
+      String? id = prefs.getString("id");
+      print("$id ---- $email ------ $token");
       if (token != null && email != null && id != null) {
         //a tela foi iniciada com um 'int? id' porque quando a tela é construída nós não temos ainda o valor do id, porém quando a função refresh é chamada no initstate, nós aproveitamos que já é feita a verificação se 'id != null' e puxamos um setState que vai atualizar a página com o id.
         setState(() {
-          userId = id;
+          userId = int.parse(id);
+          usertoken = token;
         });
         service
             .getAll(
           id: id.toString(),
-          token: token,
+          token: token!,
         )
             .then((List<Journal> listjournal) {
           setState(() {
@@ -105,6 +125,13 @@ class _HomeScreenState extends State<HomeScreen> {
       } else {
         Navigator.pushReplacementNamed(context, "login");
       }
+    });
+  }
+
+  logout(){
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.clear();
+      Navigator.pushReplacementNamed(context, "login");
     });
   }
 }

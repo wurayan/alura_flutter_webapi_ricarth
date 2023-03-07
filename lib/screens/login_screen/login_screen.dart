@@ -72,11 +72,21 @@ class LoginScreen extends StatelessWidget {
     String email = _emailController.text;
     String password = _passController.text;
 
+//          if (token != null && email != null && id != null){
+//         service
+//             .getAll(id: id.toString(), token: token)
+//             .then((List<Journal> listJournal){;
+//           setState(() {
+//             database = {};
+
+//             for (Journal journal in listJournal) {
+//               database[journal.id] = journal;
+//             }
     try {
       service.login(email: email, password: password).then((resultLogin) => {
             if (resultLogin) {
               Navigator.pushReplacementNamed(context, "home"),
-              print("indo para home")
+              print("indo para home \n$resultLogin")
               }
           });
     } on UserNotFindException {

@@ -10,13 +10,15 @@ class JournalCard extends StatelessWidget {
   final DateTime showedDate;
   final Function refreshFunction;
   final int userId;
+  final String token;
 
   const JournalCard(
       {Key? key,
       this.journal,
       required this.showedDate,
       required this.refreshFunction,
-      required this.userId})
+      required this.userId,
+      required this.token})
       : super(key: key);
 
   @override
@@ -167,7 +169,7 @@ class JournalCard extends StatelessWidget {
           .then((value) {
         if (value != null) {
           if (value) {
-            service.delete(journal!.id).then((value) {
+            service.delete(journal!.id, token).then((value) {
               // não seria necessário fazer essa verificação, ja que para o usuário apertar o botao de delete ele obrigatoriamente precisa ser um objeto não nulo, porém por boas práticas e evitar exceptions no código realizamos essa verificação extra
               if (value) {
                 ScaffoldMessenger.of(context).showSnackBar(
