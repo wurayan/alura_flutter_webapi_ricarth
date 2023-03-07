@@ -1,8 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_webapi_first_course/screens/commom/exception_dialog.dart';
 import 'package:flutter_webapi_first_course/screens/home_screen/widgets/home_screen_list.dart';
 import 'package:flutter_webapi_first_course/services/journal_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../helpers/logout.dart';
 import '../../models/journal.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -74,10 +78,10 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             ListTile(
               onTap: () {
-                logout();
+                logout(context);
               },
-              title: Text("Desconectar"),
-              leading: Icon(Icons.logout),
+              title: const Text("Desconectar"),
+              leading: const Icon(Icons.logout),
             )
           ],
         ),
@@ -95,7 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
       String? token = prefs.getString("accessToken");
       String? email = prefs.getString("email");
       String? id = prefs.getString("id");
-      print("$id ---- $email ------ $token");
+      // print("$id ---- $email ------ $token");
       if (token != null && email != null && id != null) {
         //a tela foi iniciada com um 'int? id' porque quando a tela é construída nós não temos ainda o valor do id, porém quando a função refresh é chamada no initstate, nós aproveitamos que já é feita a verificação se 'id != null' e puxamos um setState que vai atualizar a página com o id.
         setState(() {
@@ -105,7 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
         service
             .getAll(
           id: id.toString(),
-          token: token!,
+          token: token,
         )
             .then((List<Journal> listjournal) {
           setState(() {
@@ -121,17 +125,19 @@ class _HomeScreenState extends State<HomeScreen> {
               _listScrollController.jumpTo(position);
             }
           });
-        });
+        }).catchError(
+          (error) {
+            logout(context);
+          },
+          test: (error) => error is TokenNotValidException,
+        ).catchError((error){
+          //nesse método nós primeiro ocnvertemos o error para uma httpexception, permitindo assim que a ide reconheça e apresente a opção '.message', invés de digitarmos o código confiando que vai dar certo
+          var innerError = error as HttpException;
+          showExceptionDialog(context, content: innerError.message);
+        },test: (error) => error is HttpException,);
       } else {
         Navigator.pushReplacementNamed(context, "login");
       }
-    });
-  }
-
-  logout(){
-    SharedPreferences.getInstance().then((prefs) {
-      prefs.clear();
-      Navigator.pushReplacementNamed(context, "login");
     });
   }
 }

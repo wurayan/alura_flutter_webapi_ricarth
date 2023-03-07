@@ -1,12 +1,16 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_webapi_first_course/screens/commom/confirmation_dialog.dart';
+import 'package:flutter_webapi_first_course/screens/commom/exception_dialog.dart';
 import 'package:flutter_webapi_first_course/services/auth_service.dart';
 
 class LoginScreen extends StatelessWidget {
   LoginScreen({Key? key}) : super(key: key);
 
-  TextEditingController _emailController = TextEditingController();
-  TextEditingController _passController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passController = TextEditingController();
 
   final AuthService service = AuthService();
 
@@ -82,28 +86,48 @@ class LoginScreen extends StatelessWidget {
 //             for (Journal journal in listJournal) {
 //               database[journal.id] = journal;
 //             }
-    try {
-      service.login(email: email, password: password).then((resultLogin) => {
-            if (resultLogin) {
-              Navigator.pushReplacementNamed(context, "home"),
-              print("indo para home \n$resultLogin")
+
+    service
+        .login(email: email, password: password)
+        .then(
+          (resultLogin) => {
+            if (resultLogin)
+              {
+                Navigator.pushReplacementNamed(context, "home"),
+                //print("indo para home \n$resultLogin")
               }
-          });
-    } on UserNotFindException {
-      showConfirmationDialog(context,
-              content: "Usuário não encontrado, deseja criar novo usuário?",
-              affirmativeOption: "Criar")
-          .then((value) {
-        if (value != null && value) {
-          service
-              .register(email: email, password: password)
-              .then((resultRegister) {
-            if (resultRegister) {
-              Navigator.pushReplacementNamed(context, "home");
-            }
-          });
-        }
-      });
-    }
+          },
+        )
+        .catchError(
+      (error) {
+        // o '.message' é uma extensão que apénas funciona com httpexception, porém como nós estamos testando exclusivamente para httpexception, podemos usar essa função sem preocupações
+        showExceptionDialog(context, content: error.message);
+      },
+      test: (error) => error is HttpException,
+    ).catchError(
+      (error) {
+        showConfirmationDialog(context,
+                content: "Usuário não encontrado, deseja criar novo usuário?",
+                affirmativeOption: "Criar")
+            .then((value) {
+          if (value != null && value) {
+            service
+                .register(email: email, password: password)
+                .then((resultRegister) {
+              if (resultRegister) {
+                Navigator.pushReplacementNamed(context, "home");
+              }
+            });
+          }
+        });
+      },
+      test: (error) => error is UserNotFindException,
+    ).catchError(
+      (error) {
+        showExceptionDialog(context,
+            content: "Servidor fora do ar, tente novamente mais tarde.");
+      },
+      test: (error) => error is TimeoutException,
+    );
   }
 }

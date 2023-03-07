@@ -1,9 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_webapi_first_course/models/journal.dart';
 import 'package:flutter_webapi_first_course/services/journal_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../helpers/logout.dart';
 import '../../helpers/weekday.dart';
+import '../commom/exception_dialog.dart';
 
 class AddJournalScreen extends StatelessWidget {
   final Journal journal;
@@ -60,11 +64,34 @@ class AddJournalScreen extends StatelessWidget {
         if (isEditing) {
           service.register(journal, token).then((value) {
             Navigator.pop(context, value);
-          });
+          }).catchError(
+            (error) {
+              logout(context);
+              //print("shouldve logged out");
+            },
+            test: (error) => error is TokenNotValidException,
+          ).catchError(
+            (error) {
+              var innerError = error as HttpException;
+              showExceptionDialog(context, content: innerError.message);
+            },
+            test: (error) => error is HttpException,
+          );
         } else {
           service.edit(journal.id, journal, token).then((value) {
             Navigator.pop(context, value);
-          });
+          }).catchError(
+            (error) {
+              logout(context);
+            },
+            test: (error) => error is TokenNotValidException,
+          ).catchError(
+            (error) {
+              var innerError = error as HttpException;
+              showExceptionDialog(context, content: innerError.message);
+            },
+            test: (error) => error is HttpException,
+          );
         }
 
         //o segundo argumento no navigator.pop restorna uma informação para a

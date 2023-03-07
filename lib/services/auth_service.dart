@@ -1,19 +1,13 @@
 import 'dart:convert';
-import 'dart:ffi';
 import 'dart:io';
 
+import 'package:flutter_webapi_first_course/services/web_client.dart';
 import 'package:http/http.dart' as http;
-import 'package:http_interceptor/http/intercepted_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'http_interceptors.dart';
 
 class AuthService {
-  //TODO: Modularizar o endpoint
-  static const String url = "http://192.168.2.190:3000/";
-  static const String resource = "journals/";
-
-  http.Client client =
-      InterceptedClient.build(interceptors: [LoggingInterceptor()]);
+  String url = WebClient.url;
+  http.Client client = WebClient().client;
 
   Future<bool> login({required String email, required String password}) async {
     //faz a requizição do método post na URL 
@@ -33,7 +27,7 @@ class AuthService {
         }
         throw HttpException(response.body);
       } 
-      print("antes de saveuserinfo \n ${response.body}");
+      //print("antes de saveuserinfo \n ${response.body}");
       saveUserInfos(response.body);
       return true;
 
@@ -50,13 +44,13 @@ class AuthService {
       if (response.statusCode != 201){
         throw HttpException(response.body);
       }
-      print('era para parecer negocio pow');
+      //print('era para parecer negocio pow');
       saveUserInfos(response.body);
       return true;
   }
 
   saveUserInfos(String body) async {
-    print("saveuserinfo recebe \n $body");
+    //print("saveuserinfo recebe \n $body");
     Map<String, dynamic> map = json.decode(body);
     //essas respostas são salvas de acordo com a formatação do json que pode ser acessada pelo Postman
     //token salva a informação dentro do json que responde á chave accesToken
@@ -64,7 +58,7 @@ class AuthService {
     //email salva a infromação de chave 'email' dentro do subjson 'user'
     String email = map["user"]["email"];
     String id = map["user"]["id"].toString();
-    print(id);
+    //print(id);
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
     prefs.setString("accessToken", token);
@@ -73,11 +67,8 @@ class AuthService {
 
     prefs.setString("id", id);
     
-    print(prefs.getString("id"));
+    //print(prefs.getString("id"));
   }
 }
 
-class UserNotFindException implements Exception {
-  
-
-}
+class UserNotFindException implements Exception {}
